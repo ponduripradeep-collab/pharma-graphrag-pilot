@@ -11,6 +11,21 @@ This project leverages Neo4j's graph database capabilities combined with RAG tec
 - **Neo4j** — Graph database for storing and querying pharma knowledge graphs
 - **GraphRAG** — Retrieval-Augmented Generation over graph-structured data
 
+## Project Structure
+
+```
+pharma-graphrag-pilot/
+├── .env                      # AuraDB + OpenAI credentials
+├── data/
+│   └── generate_data.py      # synthetic data generator
+├── setup/
+│   ├── load_data.py          # loads data into AuraDB
+│   └── create_embeddings.py  # adds vectors to batch nodes
+├── agent/
+│   └── pharma_agent.py       # the LangChain agent
+└── README.md
+```
+
 ## Getting Started
 
 _Setup instructions coming soon._
