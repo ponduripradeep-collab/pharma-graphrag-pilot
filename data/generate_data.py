@@ -130,6 +130,7 @@ def generate_batches(n=200):
         exp_date    = (datetime.strptime(mfg_date, "%Y-%m-%d") + timedelta(days=random.choice([365*2, 365*3]))).strftime("%Y-%m-%d")
         qc_passed   = random.random() > 0.25          # 75% pass rate
         qc_desc     = random.choice(QC_PASS_DESCRIPTIONS if qc_passed else QC_FAIL_DESCRIPTIONS)
+        qc_desc     = qc_desc + f" Batch size: {random.choice([100, 200, 500, 1000])}kg. Operator: OP-{random.randint(10,99)}."
         quarter     = f"Q{(datetime.strptime(mfg_date, '%Y-%m-%d').month - 1) // 3 + 1}"
         year        = datetime.strptime(mfg_date, "%Y-%m-%d").year
 
