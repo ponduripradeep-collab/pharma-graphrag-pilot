@@ -2,6 +2,20 @@
 
 A pilot project demonstrating Graph-based Retrieval-Augmented Generation (GraphRAG) for pharmaceutical supply chain use cases using Neo4j AuraDB.
 
+## Why GraphRAG?
+
+Plain RAG retrieves text chunks by semantic similarity — it finds what *sounds like* your question.
+GraphRAG goes further: after finding similar nodes, it traverses relationships to pull in connected
+structured context. For pharmaceutical supply chain, this means:
+
+- "Which batches are at risk from this supplier?" requires 3-hop graph traversal —
+  impossible with plain RAG
+- Contamination investigations need both semantic similarity (find similar failures)
+  AND graph context (which suppliers, facilities, ingredients are connected)
+- Regulatory traceability requires complete lineage — not just similar text chunks
+
+This pilot demonstrates all three patterns on a realistic pharma dataset.
+
 ## Overview
 
 This project builds a pharmaceutical supply chain knowledge graph in Neo4j and provides an intelligent agent that answers natural language questions using three retrieval strategies:
