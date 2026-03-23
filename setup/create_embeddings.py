@@ -13,7 +13,7 @@ driver = GraphDatabase.driver(
     auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD"))
 )
 
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY2"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 EMBEDDING_MODEL = "text-embedding-ada-002"
 VECTOR_INDEX_NAME = "batchQCEmbeddings"
