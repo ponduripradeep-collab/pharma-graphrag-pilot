@@ -131,13 +131,16 @@ python pharma_agent.py
 from agent.pharma_agent import ask
 
 # Supplier impact (Cypher template)
-ask("Which batches are at risk if supplier BioSynth AG is recalled?")
+result = ask("Which batches are at risk if supplier BioSynth AG is recalled?")
+print(result["answer"])
 
 # Contamination similarity (vector search + graph traversal)
-ask("Find batches with similar contamination patterns to crystalline deposits in active pharmaceutical ingredient")
+result = ask("Find batches with similar contamination patterns to crystalline deposits in active pharmaceutical ingredient")
+print(result["answer"])
 
 # Aggregation (Text2Cypher)
-ask("How many batches failed QC from European suppliers in 2023?")
+result = ask("How many batches failed QC from European suppliers in 2023?")
+print(result["answer"])
 ```
 
 ## License

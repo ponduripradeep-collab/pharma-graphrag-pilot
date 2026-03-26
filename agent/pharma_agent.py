@@ -301,8 +301,12 @@ app = workflow.compile()
 
 # ── Run agent ─────────────────────────────────────────────────────────────────
 
-def ask(question: str) -> str:
-    """Ask the pharma supply chain agent a question."""
+def ask(question: str) -> dict:
+    """Ask the pharma supply chain agent a question.
+
+    Returns:
+        dict: {"tool": <ROUTER_ROUTE>, "answer": <answer text>}
+    """
     print(f"\n{'='*60}")
     print(f"Question: {question}")
     print('='*60)
@@ -316,7 +320,8 @@ def ask(question: str) -> str:
     })
 
     print(f"\n💊 Answer:\n{response['answer']}")
-    return response["answer"]
+    tool = response.get("route") or "AGGREGATION"
+    return {"tool": tool, "answer": response["answer"]}
 
 # ── Demo ──────────────────────────────────────────────────────────────────────
 
@@ -325,10 +330,10 @@ if __name__ == "__main__":
     print("   Powered by Neo4j + LangChain + OpenAI\n")
 
     # # Demo question 1 — Cypher template
-    # ask("Which batches are at risk if supplier BioSynth AG is recalled?")
+    _ = ask("Which batches are at risk if supplier BioSynth AG is recalled?")
 
     # Demo question 2 — Vector similarity + graph retrieval
-    ask("Find batches with similar contamination patterns to crystalline deposits in active pharmaceutical ingredient")
+    _ = ask("Find batches with similar contamination patterns to crystalline deposits in active pharmaceutical ingredient")
 
     # # Demo question 3 — Text2Cypher aggregation
-    # ask("How many batches failed QC from European suppliers in 2023?")
+    _ = ask("How many batches failed QC from European suppliers in 2023?")
