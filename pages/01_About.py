@@ -120,6 +120,30 @@ This structure supports real traceability questions (e.g., supplier recalls) by 
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
+    st.markdown("<div class='panel'>", unsafe_allow_html=True)
+    st.markdown(
+        """
+**Graph model at a glance**
+
+```text
+Supplier
+   ▲
+   │ [:SUPPLIED_BY]
+Ingredient
+   ▲
+   │ [:CONTAINS]
+Batch ────[:MANUFACTURED_AT]──▶ Facility
+  │
+  └──────[:PRODUCES]──────────▶ Product
+```
+
+- **Supplier → Ingredient → Batch**: trace impact of a supplier recall across ingredients and batches.
+- **Batch → Facility**: see where affected product was manufactured.
+- **Batch → Product**: understand which finished products are impacted.
+"""
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
 with right:
     st.markdown("<div class='panel'>", unsafe_allow_html=True)
     st.markdown(

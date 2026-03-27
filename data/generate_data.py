@@ -121,6 +121,50 @@ def random_date(start_year=2023, end_year=2025):
     end   = datetime(end_year, 12, 31)
     return (start + timedelta(days=random.randint(0, (end - start).days))).strftime("%Y-%m-%d")
 
+def _qc_detail_suffix(qc_passed: bool) -> str:
+    """Add variability to QC narratives so batches don't look identical."""
+    deviation = f"DEV-{random.randint(1000, 9999)}"
+    sample = f"SMP-{random.randint(10000, 99999)}"
+    line = random.choice(["Line A", "Line B", "Line C", "Suite 2", "Suite 4"])
+    unit_op = random.choice(["granulation", "milling", "compression", "coating", "blending", "filtration", "filling"])
+    test_area = random.choice(["QC Lab", "Micro Lab", "In-Process Lab", "Stability Lab"])
+    sample_point = random.choice(
+        ["blend sample", "bulk API sample", "pre-coating sample", "post-coating sample", "final container sample"]
+    )
+
+    if qc_passed:
+        disposition = random.choice(["Released", "Released after review", "Released with no observations"])
+        review = random.choice(
+            ["QA review complete", "COA verified", "trend review performed", "batch record reviewed", "no deviations noted"]
+        )
+        return f" Disposition: {disposition}. {review}. Ref: {deviation}. Sample: {sample} ({sample_point}) at {test_area}."
+
+    severity = random.choice(["Minor", "Major", "Critical"])
+    action = random.choice(
+        [
+            "QA initiated investigation",
+            "CAPA opened",
+            "additional sampling requested",
+            "material quarantined",
+            "line clearance repeated",
+            "equipment cleaning verified",
+        ]
+    )
+    observation = random.choice(
+        [
+            "visible particles noted",
+            "atypical odor detected",
+            "unexpected turbidity observed",
+            "residue found on filter media",
+            "abnormal crystallization observed",
+            "foreign particulate suspected",
+        ]
+    )
+    return (
+        f" Severity: {severity}. Observation: {observation} during {unit_op} on {line}. "
+        f"Action: {action}. Ref: {deviation}. Sample: {sample} ({sample_point}) at {test_area}."
+    )
+
 def generate_batches(n=200):
     batches = []
     for i in range(1, n + 1):
@@ -130,6 +174,7 @@ def generate_batches(n=200):
         exp_date    = (datetime.strptime(mfg_date, "%Y-%m-%d") + timedelta(days=random.choice([365*2, 365*3]))).strftime("%Y-%m-%d")
         qc_passed   = random.random() > 0.25          # 75% pass rate
         qc_desc     = random.choice(QC_PASS_DESCRIPTIONS if qc_passed else QC_FAIL_DESCRIPTIONS)
+        qc_desc     = qc_desc + _qc_detail_suffix(qc_passed)
         qc_desc     = qc_desc + f" Batch size: {random.choice([100, 200, 500, 1000])}kg. Operator: OP-{random.randint(10,99)}."
         quarter     = f"Q{(datetime.strptime(mfg_date, '%Y-%m-%d').month - 1) // 3 + 1}"
         year        = datetime.strptime(mfg_date, "%Y-%m-%d").year

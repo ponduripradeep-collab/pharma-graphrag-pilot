@@ -33,6 +33,16 @@ def _format_answer_for_display(answer: str) -> str:
     # Two trailing spaces forces a line break while preserving markdown styling.
     return "  \n".join(out_lines)
 
+def _reasoning_path(tool: str | None) -> str:
+    tool = (tool or "").strip().upper()
+    if tool == "SUPPLIER_IMPACT":
+        return "Supplier → Ingredient → Batch → Facility → Product"
+    if tool == "CONTAMINATION_SEARCH":
+        return "Query → Vector search (QC text) → Similar Batches → (Ingredients → Suppliers) + Facility"
+    if tool == "AGGREGATION":
+        return "Question → Text2Cypher → Neo4j query → Aggregated result"
+    return "Question → Router → Selected tool → Result"
+
 def render_home() -> None:
     st.markdown(
         f"""
@@ -68,6 +78,13 @@ def render_home() -> None:
         letter-spacing: 0.02em;
         text-transform: uppercase;
         font-size: 0.85rem;
+    }}
+
+    .reasoning-path {{
+        color: var(--muted);
+        margin-top: 6px;
+        margin-bottom: 10px;
+        font-size: 0.92rem;
     }}
 
     .response-panel {{
@@ -115,7 +132,9 @@ def render_home() -> None:
     custom_question = st.text_input("Custom question", value=st.session_state["question"])
     st.session_state["question"] = custom_question
 
-    ask_submit = st.button("Ask", use_container_width=True, type="primary")
+    ask_col, _ = st.columns([1, 3])
+    with ask_col:
+        ask_submit = st.button("Ask", type="primary")
 
     if "last_tool" not in st.session_state:
         st.session_state["last_tool"] = None
@@ -131,7 +150,10 @@ def render_home() -> None:
             f"<span class='tool-badge'>{st.session_state['last_tool']}</span>",
             unsafe_allow_html=True,
         )
-        st.markdown("&nbsp;", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='reasoning-path'><b>Traversal</b>: {_reasoning_path(st.session_state['last_tool'])}</div>",
+            unsafe_allow_html=True,
+        )
         st.markdown(_format_answer_for_display(st.session_state["last_answer"]))
         st.caption(f"Response time: {st.session_state['last_elapsed']:.2f} seconds")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -139,6 +161,11 @@ def render_home() -> None:
         st.info("Enter a question and click `Ask` to see the answer.")
 
     if ask_submit and custom_question.strip():
+        # Clear previous response immediately so the old answer doesn't linger
+        st.session_state["last_tool"] = None
+        st.session_state["last_answer"] = ""
+        st.session_state["last_elapsed"] = None
+
         with st.spinner("GraphRAG is working..."):
             start = time.perf_counter()
             result = ask(custom_question.strip())
