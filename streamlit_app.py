@@ -68,6 +68,15 @@ def render_home() -> None:
         font-size: 0.98rem;
     }}
 
+    .ask-section-subtitle {{
+        color: var(--muted);
+        font-size: 0.88rem;
+        opacity: 0.88;
+        margin-top: -6px;
+        margin-bottom: 10px;
+        line-height: 1.45;
+    }}
+
     .tool-badge {{
         display: inline-block;
         background: var(--neo4j-green);
@@ -121,20 +130,44 @@ def render_home() -> None:
     if "question" not in st.session_state:
         st.session_state["question"] = ""
 
+    pending_q = st.session_state.get("_pending_ask")
+
     st.subheader("Ask a question")
+    st.markdown(
+        "<div class='ask-section-subtitle'>Best for: supplier recall impact, contamination pattern search, "
+        "and supply chain analytics</div>",
+        unsafe_allow_html=True,
+    )
     st.caption("Pick an example or type your own question.")
 
     cols = st.columns(3)
     for i, ex in enumerate(example_questions):
-        if cols[i].button(ex, key=f"ex_{i}"):
+        if cols[i].button(ex, key=f"ex_{i}", disabled=bool(pending_q)):
             st.session_state["question"] = ex
 
-    custom_question = st.text_input("Custom question", value=st.session_state["question"])
-    st.session_state["question"] = custom_question
+    custom_question = st.text_input(
+        "Custom question",
+        value=pending_q or st.session_state["question"],
+        disabled=bool(pending_q),
+    )
+    if not pending_q:
+        st.session_state["question"] = custom_question
 
     ask_col, _ = st.columns([1, 3])
     with ask_col:
-        ask_submit = st.button("Ask", type="primary")
+        ask_submit = st.button("Ask", type="primary", disabled=bool(pending_q))
+
+    if pending_q:
+        with st.spinner("GraphRAG is working..."):
+            start = time.perf_counter()
+            result = ask(pending_q)
+            elapsed = time.perf_counter() - start
+
+        st.session_state["last_tool"] = str(result.get("tool") or "AGGREGATION")
+        st.session_state["last_answer"] = result.get("answer") or ""
+        st.session_state["last_elapsed"] = elapsed
+        del st.session_state["_pending_ask"]
+        st.rerun()
 
     if "last_tool" not in st.session_state:
         st.session_state["last_tool"] = None
@@ -160,20 +193,12 @@ def render_home() -> None:
     else:
         st.info("Enter a question and click `Ask` to see the answer.")
 
-    if ask_submit and custom_question.strip():
-        # Clear previous response immediately so the old answer doesn't linger
+    if ask_submit and custom_question.strip() and not pending_q:
+        st.session_state["_pending_ask"] = custom_question.strip()
+        st.session_state["question"] = custom_question.strip()
         st.session_state["last_tool"] = None
         st.session_state["last_answer"] = ""
         st.session_state["last_elapsed"] = None
-
-        with st.spinner("GraphRAG is working..."):
-            start = time.perf_counter()
-            result = ask(custom_question.strip())
-            elapsed = time.perf_counter() - start
-
-        st.session_state["last_tool"] = str(result.get("tool") or "AGGREGATION")
-        st.session_state["last_answer"] = result.get("answer") or ""
-        st.session_state["last_elapsed"] = elapsed
         st.rerun()
 
 

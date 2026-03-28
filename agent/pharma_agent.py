@@ -135,7 +135,7 @@ def contamination_similarity_tool(query: str, k: int = 3) -> str:
 
             if record:
                 status = "✅ PASS" if record["qc_passed"] else "❌ FAIL"
-                lines.append(f"Batch {record['batch_id']} [{status}] — similarity score: {score:.4f}")
+                lines.append(f"Batch {record['batch_id']} [{status}] — similarity: {score:.3f}")
                 lines.append(f"  Product: {record['product']}")
                 lines.append(f"  Facility: {record['facility']}")
                 lines.append(f"  Suppliers: {', '.join(record['suppliers'])}")
