@@ -30,6 +30,7 @@ This project builds a pharmaceutical supply chain knowledge graph in Neo4j and p
 - **LangGraph** — agent workflow orchestration (classify → retrieve → generate)
 - **LangChain** — Neo4j integration, vector store, GraphCypherQAChain
 - **OpenAI** — `gpt-4o-mini` for routing and generation, `text-embedding-ada-002` for QC embeddings
+- **Streamlit** — web UI, deployable to Streamlit Cloud
 
 ## Graph Schema
 
@@ -60,6 +61,10 @@ This project builds a pharmaceutical supply chain knowledge graph in Neo4j and p
 pharma-graphrag-pilot/
 ├── .env                          # AuraDB + OpenAI credentials (see below)
 ├── requirements.txt              # Python dependencies
+├── runtime.txt                   # Python version pin for Streamlit Cloud
+├── streamlit_app.py              # Streamlit web UI (main entry point)
+├── pages/
+│   └── 01_About.py               # About page for the Streamlit app
 ├── data/
 │   ├── generate_data.py          # Generates synthetic pharma_data.json (200 batches)
 │   └── pharma_data.json          # Generated synthetic dataset
@@ -69,6 +74,8 @@ pharma-graphrag-pilot/
 │   └── pharma_data.json          # Copy of data used by setup scripts
 ├── agent/
 │   └── pharma_agent.py           # LangGraph agent with 3 retrieval tools
+├── demo/
+│   └── gpt_script.md             # Demo walkthrough script
 ├── testing/
 │   └── similarity_pattern_test.py # Standalone vector similarity search test
 └── README.md
@@ -118,7 +125,15 @@ python create_embeddings.py
 # Creates a cosine vector index named 'batchQCEmbeddings'
 ```
 
-**5. Run the agent**
+**5. Run the Streamlit app**
+
+```bash
+streamlit run streamlit_app.py
+```
+
+This opens a web UI where you can ask questions using the example prompts or type your own. The sidebar shows knowledge graph stats and each response shows which retrieval tool was used and the traversal path.
+
+**6. (Optional) Run the agent directly**
 
 ```bash
 cd agent
@@ -142,6 +157,10 @@ print(result["answer"])
 result = ask("How many batches failed QC from European suppliers in 2023?")
 print(result["answer"])
 ```
+
+## Related
+
+- Article: [What a 90,000-bottle drug recall reveals about GraphRAG](https://www.linkedin.com/pulse/what-90000-bottle-drug-recall-reveals-graphrag-pradeep-ponduri-b4o2c/)
 
 ## License
 
