@@ -85,10 +85,21 @@ def supplier_impact_tool(supplier_name: str) -> str:
     lines = [f"Supplier recall impact analysis for: {supplier_name}",
              f"Total affected batches: {len(records)}\n"]
 
+    def _status_badge(batch_status: str, qc_passed: bool) -> str:
+        # Prefer the explicit batch status stored in Neo4j; fall back to qc_passed.
+        normalized = (batch_status or "").strip().upper()
+        if normalized == "REJECTED":
+            return "🔴 REJECTED"
+        if normalized in {"UNDER_INVESTIGATION", "UNDER INVESTIGATION"}:
+            return "🟡 UNDER INVESTIGATION"
+        if normalized == "RELEASED":
+            return "🟢 RELEASED"
+        return "🟢 RELEASED" if qc_passed else "🔴 REJECTED"
+
     for r in records:
-        status = "✅ PASS" if r["qc_passed"] else "❌ FAIL"
+        status_badge = _status_badge(r.get("status"), r.get("qc_passed"))
         lines.append(
-            f"  Batch {r['batch_id']} [{status}] — {r['product']} "
+            f"  Batch {r['batch_id']} [{status_badge}] — {r['product']} "
             f"| Ingredient: {r['ingredient']} "
             f"| Facility: {r['facility']} "
             f"| Date: {r['mfg_date']}"
@@ -321,7 +332,7 @@ def ask(question: str) -> dict:
 
     print(f"\n💊 Answer:\n{response['answer']}")
     tool = response.get("route") or "AGGREGATION"
-    return {"tool": tool, "answer": response["answer"]}
+    return {"tool": tool, "answer": response["answer"], "context": response.get("context", "")}
 
 # ── Demo ──────────────────────────────────────────────────────────────────────
 

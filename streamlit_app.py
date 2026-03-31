@@ -43,6 +43,33 @@ def _reasoning_path(tool: str | None) -> str:
         return "Question → Text2Cypher → Neo4j query → Aggregated result"
     return "Question → Router → Selected tool → Result"
 
+def _split_into_batch_blocks(answer: str) -> tuple[list[str], list[list[str]]]:
+    """
+    Splits agent output into:
+    - header lines (before the first 'Batch ...' line)
+    - batch blocks (each starts at a line whose left-stripped text begins with 'Batch ')
+
+    Each batch block includes all lines until the next batch header line.
+    """
+    if not answer:
+        return [], []
+
+    lines = answer.splitlines()
+    start_indices: list[int] = []
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("Batch "):
+            start_indices.append(i)
+
+    if not start_indices:
+        return lines, []
+
+    header = lines[: start_indices[0]]
+    blocks: list[list[str]] = []
+    for idx, start_i in enumerate(start_indices):
+        end_i = start_indices[idx + 1] if idx + 1 < len(start_indices) else len(lines)
+        blocks.append(lines[start_i:end_i])
+    return header, blocks
+
 def render_home() -> None:
     st.markdown(
         f"""
@@ -163,8 +190,13 @@ def render_home() -> None:
             result = ask(pending_q)
             elapsed = time.perf_counter() - start
 
-        st.session_state["last_tool"] = str(result.get("tool") or "AGGREGATION")
-        st.session_state["last_answer"] = result.get("answer") or ""
+        tool = str(result.get("tool") or "AGGREGATION")
+        st.session_state["last_tool"] = tool
+        # For contamination search, use the raw tool output (has correct PASS/FAIL + similarity scores)
+        if tool == "CONTAMINATION_SEARCH":
+            st.session_state["last_answer"] = result.get("context") or result.get("answer") or ""
+        else:
+            st.session_state["last_answer"] = result.get("answer") or ""
         st.session_state["last_elapsed"] = elapsed
         del st.session_state["_pending_ask"]
         st.rerun()
@@ -187,7 +219,31 @@ def render_home() -> None:
             f"<div class='reasoning-path'><b>Traversal</b>: {_reasoning_path(st.session_state['last_tool'])}</div>",
             unsafe_allow_html=True,
         )
-        st.markdown(_format_answer_for_display(st.session_state["last_answer"]))
+
+        # Pagination / load-more for batch-heavy responses
+        show_load_more_tools = {"SUPPLIER_IMPACT", "CONTAMINATION_SEARCH"}
+        last_tool = str(st.session_state["last_tool"]).strip().upper()
+        last_answer = st.session_state["last_answer"]
+
+        header, batch_blocks = _split_into_batch_blocks(last_answer)
+        initial_blocks_shown = 5
+
+        if last_tool in show_load_more_tools and batch_blocks:
+            shown = int(st.session_state.get("_shown_batch_blocks", initial_blocks_shown))
+            shown = max(1, min(shown, len(batch_blocks)))
+
+            displayed_lines = header + [ln for block in batch_blocks[:shown] for ln in block]
+            displayed_answer = "\n".join(displayed_lines)
+            st.markdown(_format_answer_for_display(displayed_answer))
+
+            if shown < len(batch_blocks):
+                st.caption(f"Showing {shown} of {len(batch_blocks)} batches")
+                if st.button("Load more batches"):
+                    st.session_state["_shown_batch_blocks"] = shown + 5
+                    st.rerun()
+        else:
+            st.markdown(_format_answer_for_display(last_answer))
+
         st.caption(f"Response time: {st.session_state['last_elapsed']:.2f} seconds")
         st.markdown("</div>", unsafe_allow_html=True)
     else:
@@ -199,6 +255,7 @@ def render_home() -> None:
         st.session_state["last_tool"] = None
         st.session_state["last_answer"] = ""
         st.session_state["last_elapsed"] = None
+        st.session_state["_shown_batch_blocks"] = 5
         st.rerun()
 
 
